@@ -11,3 +11,6 @@ data/raw/*.tsv
 
 # Python environment
 .env
+
+# Generated processed datasets
+data/processed/movies_feature_engineered.csv
