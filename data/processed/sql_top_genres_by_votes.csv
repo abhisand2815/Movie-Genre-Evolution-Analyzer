@@ -1,0 +1,11 @@
+genre,movie_count,avg_votes,avg_rating
+Sci-Fi,8207,19495.97,5.31
+Adventure,20979,16111.44,5.84
+Animation,6507,12003.24,6.26
+Fantasy,10695,11513.12,5.82
+Action,35656,10946.57,5.72
+Mystery,13789,9936.63,5.79
+Crime,30239,8328.28,5.96
+Thriller,29796,7513.61,5.57
+Biography,11075,7453.1,6.91
+Horror,27061,5110.09,4.96
