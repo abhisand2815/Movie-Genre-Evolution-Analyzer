@@ -13,20 +13,56 @@ import { Navbar } from './components/Navbar'
 import { DashboardView } from './components/DashboardView'
 import { MovieAnalyticsView } from './components/MovieAnalyticsView'
 
+// ============================================================
+// API BASE URL & HYBRID LOADER
+// ============================================================
+
+const API_BASE_URL = 'http://localhost:5000/api'
+
+type ApiResponse<T> = {
+  status: string
+  data: T[]
+}
+
+/**
+ * Smart dataset loader: Tries backend Express API first (/api/endpoint).
+ * If backend server is unreachable or errors out, gracefully falls back to local CSV files.
+ */
+async function loadDataset<T>(
+  endpoint: string,
+  csvFallbackPath: string
+): Promise<T[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`)
+    if (response.ok) {
+      const result: ApiResponse<T> = await response.json()
+      if (result.status === 'success' && Array.isArray(result.data) && result.data.length > 0) {
+        return result.data
+      }
+    }
+  } catch {
+    // Backend API offline; fallback to direct CSV
+  }
+  return loadCSV<T>(csvFallbackPath)
+}
+
 function App() {
-  // Theme state
+  // ============================================================
+  // THEME & NAVIGATION STATE
+  // ============================================================
+
   const [theme, setTheme] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('app_theme')
     return (saved as ThemeMode) || 'dark'
   })
 
-  // Page Navigation state
   const [activePage, setActivePage] = useState<'dashboard' | 'movie-analytics'>('dashboard')
-
-  // Selected Movie for Page 2
   const [selectedMovie, setSelectedMovie] = useState<MovieSearchRow | null>(null)
 
-  // Datasets
+  // ============================================================
+  // DATASETS
+  // ============================================================
+
   const [kpis, setKpis] = useState<KpiRow[]>([])
   const [genres, setGenres] = useState<GenreRow[]>([])
   const [decades, setDecades] = useState<DecadeRow[]>([])
@@ -38,7 +74,10 @@ function App() {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Toggle Theme function
+  // ============================================================
+  // THEME TOGGLE
+  // ============================================================
+
   const handleToggleTheme = () => {
     setTheme(prev => {
       const next = prev === 'dark' ? 'light' : 'dark'
@@ -48,7 +87,7 @@ function App() {
   }
 
   // ============================================================
-  // LOAD ALL DASHBOARD & MOVIE DATASETS
+  // LOAD ALL DATASETS FROM BACKEND API WITH FALLBACK
   // ============================================================
 
   const loadAllDashboardData = async () => {
@@ -64,12 +103,12 @@ function App() {
         clustersData,
         moviesData,
       ] = await Promise.all([
-        loadCSV<KpiRow>('/data/dashboard_kpis.csv'),
-        loadCSV<GenreRow>('/data/dashboard_genre_summary.csv'),
-        loadCSV<DecadeRow>('/data/dashboard_decade_summary.csv'),
-        loadCSV<GenreTrendRow>('/data/dashboard_genre_trends.csv'),
-        loadCSV<ClusterRow>('/data/dashboard_cluster_distribution.csv'),
-        loadCSV<MovieSearchRow>('/data/dashboard_movies_search.csv'),
+        loadDataset<KpiRow>('/kpis', '/data/dashboard_kpis.csv'),
+        loadDataset<GenreRow>('/genres', '/data/dashboard_genre_summary.csv'),
+        loadDataset<DecadeRow>('/decades', '/data/dashboard_decade_summary.csv'),
+        loadDataset<GenreTrendRow>('/genre-trends', '/data/dashboard_genre_trends.csv'),
+        loadDataset<ClusterRow>('/clusters', '/data/dashboard_cluster_distribution.csv'),
+        loadDataset<MovieSearchRow>('/movies', '/data/dashboard_movies_search.csv'),
       ])
 
       console.log('KPI data loaded:', kpisData.length)
@@ -91,7 +130,7 @@ function App() {
         setSelectedGenre(dramaExists ? 'Drama' : genresData[0].genre)
       }
     } catch (err) {
-      console.error('Error loading dashboard datasets:', err)
+      console.error('Error loading dashboard data:', err)
       setError('Unable to load dashboard data.')
     } finally {
       setLoading(false)
@@ -102,7 +141,10 @@ function App() {
     loadAllDashboardData()
   }, [])
 
-  // Handler when user selects a movie from search or cards
+  // ============================================================
+  // MOVIE SELECTION
+  // ============================================================
+
   const handleSelectMovie = (movie: MovieSearchRow | null) => {
     setSelectedMovie(movie)
     if (movie) {
@@ -124,7 +166,7 @@ function App() {
         }`}
       >
         <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
           <p className="text-lg font-medium">Loading dashboard data...</p>
         </div>
       </div>
@@ -144,21 +186,15 @@ function App() {
       >
         <div
           className={`max-w-md rounded-xl border p-8 text-center shadow-2xl ${
-            isDark
-              ? 'border-red-800/50 bg-slate-900/90'
-              : 'border-red-200 bg-white'
+            isDark ? 'border-red-800/50 bg-slate-900/90' : 'border-red-200 bg-white'
           }`}
         >
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-red-800/40 bg-red-950/60 text-2xl text-red-400">
             ⚠️
           </div>
           <h3 className="text-xl font-bold">{error}</h3>
-          <p
-            className={`mt-2 text-sm ${
-              isDark ? 'text-slate-400' : 'text-slate-600'
-            }`}
-          >
-            Failed to retrieve dashboard CSV datasets. Please verify data files and try again.
+          <p className={`mt-2 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            Unable to connect to data sources. Please try again.
           </p>
           <button
             onClick={loadAllDashboardData}
@@ -181,7 +217,6 @@ function App() {
         isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'
       }`}
     >
-      {/* NAVBAR WITH THEME TOGGLE & PAGE SWITCHER */}
       <Navbar
         theme={theme}
         onToggleTheme={handleToggleTheme}
@@ -190,10 +225,8 @@ function App() {
         selectedMovieTitle={selectedMovie?.primaryTitle}
       />
 
-      {/* MAIN CONTAINER */}
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {activePage === 'dashboard' ? (
-          /* PAGE 1: MAIN DASHBOARD (PRESERVED 100%) */
           <DashboardView
             theme={theme}
             kpis={kpis}
@@ -206,7 +239,6 @@ function App() {
             onNavigateToMovieSearch={() => setActivePage('movie-analytics')}
           />
         ) : (
-          /* PAGE 2: CONNECTED MOVIE SEARCH & DETAILED ANALYTICS PAGE */
           <MovieAnalyticsView
             theme={theme}
             movies={movies}
