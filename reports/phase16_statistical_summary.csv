@@ -1,0 +1,4 @@
+test,comparison,statistic,p_value,significant
+Spearman Correlation,IMDb Rating vs Votes,-0.12701730351322366,0.0,True
+One-Way ANOVA,IMDb Rating across Decades,274.24396241839827,0.0,True
+Chi-Square Test,Genre vs Decade,99794.89044999843,0.0,True
