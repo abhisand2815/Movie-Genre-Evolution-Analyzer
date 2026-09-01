@@ -31,3 +31,12 @@ dist/
 build/
 
 backend/node_modules/
+
+
+# Frontend dependencies
+frontend/node_modules/
+
+# Environment variables
+.env
+backend/.env
+frontend/.env
