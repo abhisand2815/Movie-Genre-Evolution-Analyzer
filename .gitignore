@@ -29,3 +29,5 @@ frontend/dist/
 # Build files
 dist/
 build/
+
+backend/node_modules/
