@@ -1,16 +1,31 @@
+# Python environment
 .venv/
 venv/
+
+# Python cache
 __pycache__/
 *.pyc
+
+# macOS / VS Code
 .DS_Store
 .vscode/
+
+# Jupyter
 .ipynb_checkpoints/
 
 # Raw datasets
 data/raw/*.tsv
 
-# Python environment
+# Environment variables
 .env
 
-# Generated processed datasets
+# Generated processed dataset
 data/processed/movies_feature_engineered.csv
+
+# Frontend dependencies
+frontend/node_modules/
+frontend/dist/
+
+# Build files
+dist/
+build/
