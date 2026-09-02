@@ -20,12 +20,11 @@ services:
   # ------------------------------------------------------------
   # Frontend React / Vite Static Site
   # ------------------------------------------------------------
-  - type: web
+  - type: static
     name: movie-genre-evolution-frontend
-    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    staticPublishPath: ./dist
     routes:
       - type: rewrite
         source: /*
